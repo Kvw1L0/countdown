@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cuenta regresiva — 25 Sep 2025 15:00 (Chile)</title>
+  <meta name="description" content="Temporizador en vivo que muestra cuántas horas, minutos y segundos faltan para el 25 de septiembre de 2025 a las 15:00 en Chile." />
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --fg: #e8f1ff;
+      --muted: #8aa4c7;
+      --accent: #5ee1ff;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% 20%, #0f1623, var(--bg));
+      color: var(--fg);
+      display: grid;
+      place-items: center;
+    }
+    .wrap {
+      text-align: center;
+      padding: 2rem;
+      max-width: 900px;
+      width: 100%;
+    }
+    h1 {
+      font-size: clamp(1.2rem, 2.2vw + 1rem, 2.2rem);
+      font-weight: 700;
+      margin: 0 0 1.25rem;
+      letter-spacing: 0.2px;
+      color: var(--fg);
+    }
+    .target {
+      font-size: clamp(0.9rem, 1vw + 0.6rem, 1.1rem);
+      color: var(--muted);
+      margin-bottom: 2rem;
+    }
+    .timer {
+      display: inline-flex;
+      align-items: baseline;
+      gap: clamp(0.4rem, 1.2vw, 1rem);
+      padding: clamp(0.6rem, 1.2vw, 1rem) clamp(0.8rem, 2vw, 1.4rem);
+      border-radius: 1rem;
+      background: rgba(255,255,255,0.04);
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.06) inset, 0 8px 30px rgba(0,0,0,0.35);
+    }
+    .block {
+      display: grid;
+      gap: 0.25rem;
+      min-width: clamp(90px, 14vw, 200px);
+    }
+    .value {
+      font-variant-numeric: tabular-nums;
+      font-weight: 800;
+      letter-spacing: 1px;
+      line-height: 1;
+      font-size: clamp(2.2rem, 10vw, 6rem);
+      text-shadow: 0 4px 24px rgba(94, 225, 255, 0.25);
+    }
+    .label {
+      font-size: clamp(0.65rem, 1vw, 0.9rem);
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+    .separator {
+      font-size: clamp(2rem, 8vw, 5rem);
+      opacity: 0.5;
+      user-select: none;
+    }
+    .done {
+      font-size: clamp(1.2rem, 2vw + 1rem, 2rem);
+      margin-top: 1.5rem;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .foot {
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      color: #c7d7ff;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Cuenta regresiva</h1>
+    <div class="target" id="targetText">
+      Fecha objetivo: <span class="mono">25&nbsp;sept&nbsp;2025&nbsp;15:00</span> — <span class="mono">America/Santiago</span>
+    </div>
+
+    <div class="timer" aria-live="polite" aria-atomic="true">
+      <div class="block">
+        <div id="hours" class="value">--</div>
+        <div class="label">horas</div>
+      </div>
+      <div class="separator">:</div>
+      <div class="block">
+        <div id="minutes" class="value">--</div>
+        <div class="label">minutos</div>
+      </div>
+      <div class="separator">:</div>
+      <div class="block">
+        <div id="seconds" class="value">--</div>
+        <div class="label">segundos</div>
+      </div>
+    </div>
+
+    <div id="done" class="done" hidden>¡Tiempo cumplido!</div>
+    <div class="foot">
+      Este temporizador usa la hora del dispositivo de quien lo abre.
+    </div>
+  </main>
+
+  <script>
+    // === CONFIGURACIÓN ===
+    // Definimos la fecha objetivo en la zona horaria de Chile (America/Santiago).
+    // Nota: Para evitar ambigüedades por horario de verano, calculamos el UTC de esa fecha/horario en Chile.
+    // Para el 25-sep-2025 a las 15:00 en Chile, la zona está en UTC-3, por lo tanto:
+    // 15:00 America/Santiago = 18:00 UTC
+    const TARGET_ISO_UTC = "2025-09-25T18:00:00Z"; // 25-sep-2025 15:00 Chile
+
+    // Permitir override vía querystring, por ejemplo:
+    //   ?target=2025-09-25T15:00:00-03:00  (ISO con offset)
+    // Útil si quisieras cambiar la fecha sin editar el archivo.
+    const params = new URLSearchParams(location.search);
+    const override = params.get("target");
+    const target = override ? new Date(override) : new Date(TARGET_ISO_UTC);
+
+    // Renderizamos el texto de referencia de la fecha objetivo
+    (function updateTargetText() {
+      const tText = document.getElementById("targetText");
+      try {
+        const fmt = new Intl.DateTimeFormat("es-CL", {
+          timeZone: "America/Santiago",
+          dateStyle: "full",
+          timeStyle: "short"
+        });
+        tText.innerHTML = 'Fecha objetivo: <span class="mono">' + fmt.format(target) + '</span> — <span class="mono">America/Santiago</span>';
+      } catch (e) {
+        // Fallback si Intl no soporta esa zona horaria (muy raro hoy en día)
+        tText.innerHTML = 'Fecha objetivo: <span class="mono">25 sep 2025 15:00</span> — <span class="mono">America/Santiago</span>';
+      }
+    })();
+
+    const $h = document.getElementById("hours");
+    const $m = document.getElementById("minutes");
+    const $s = document.getElementById("seconds");
+    const $done = document.getElementById("done");
+
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function tick() {
+      const now = Date.now();
+      const diffMs = target.getTime() - now;
+
+      if (diffMs <= 0) {
+        $h.textContent = "00";
+        $m.textContent = "00";
+        $s.textContent = "00";
+        $done.hidden = false;
+        return;
+      } else {
+        $done.hidden = true;
+      }
+
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const totalMinutes = Math.floor(totalSeconds / 60);
+      const totalHours = Math.floor(totalMinutes / 60);
+
+      const seconds = totalSeconds % 60;
+      const minutes = totalMinutes % 60;
+      const hours = totalHours; // mostramos horas totales (pueden ser > 24)
+
+      $h.textContent = hours.toString();
+      $m.textContent = pad(minutes);
+      $s.textContent = pad(seconds);
+    }
+
+    // Primera ejecución inmediata
+    tick();
+    // Actualizar cada segundo
+    const intervalId = setInterval(tick, 1000);
+
+    // Limpieza por si el navegador oculta la pestaña
+    window.addEventListener("visibilitychange", () => {
+      if (!document.hidden) tick();
+    });
+  </script>
+</body>
+</html>
