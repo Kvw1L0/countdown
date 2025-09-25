@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cuenta regresiva — 3 Oct 2025 15:00 (Chile) — Hora servidor</title>
+  <meta name="description" content="Temporizador que usa la hora del servidor (cabecera Date) para calcular el tiempo restante al 3 de octubre de 2025 a las 15:00 (America/Santiago)." />
+  <style>
+    :root { --bg:#0b0f14; --fg:#e8f1ff; --muted:#8aa4c7; --accent:#5ee1ff; }
+    html,body{height:100%;margin:0}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 20% 20%, #0f1623, var(--bg));
+      color: var(--fg);
+      display:grid;place-items:center;
+    }
+    .wrap{ text-align:center; padding:2rem; max-width:900px; width:100%; }
+    h1{ font-size:clamp(1.2rem,2.2vw+1rem,2.2rem); font-weight:700; margin:0 0 1.25rem; letter-spacing:.2px; }
+    .target{ font-size:clamp(.9rem,1vw+.6rem,1.1rem); color:var(--muted); margin-bottom:2rem; }
+    .timer{
+      display:inline-flex; align-items:baseline; gap:clamp(.4rem,1.2vw,1rem);
+      padding:clamp(.6rem,1.2vw,1rem) clamp(.8rem,2vw,1.4rem);
+      border-radius:1rem; background:rgba(255,255,255,.04);
+      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset, 0 8px 30px rgba(0,0,0,.35);
+    }
+    .block{ display:grid; gap:.25rem; min-width:clamp(90px,14vw,200px); }
+    .value{ font-variant-numeric:tabular-nums; font-weight:800; letter-spacing:1px; line-height:1; font-size:clamp(2.2rem,10vw,6rem); text-shadow:0 4px 24px rgba(94,225,255,.25); }
+    .label{ font-size:clamp(.65rem,1vw,.9rem); color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; }
+    .separator{ font-size:clamp(2rem,8vw,5rem); opacity:.5; user-select:none; }
+    .done{ font-size:clamp(1.2rem,2vw+1rem,2rem); margin-top:1.5rem; color:var(--accent); font-weight:700; }
+    .foot{ margin-top:1.25rem; font-size:.9rem; color:var(--muted); opacity:.9; }
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; color:#c7d7ff; }
+    .warn{ color:#ffd966; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Cuenta regresiva (hora del servidor)</h1>
+    <div class="target" id="targetText">
+      Fecha objetivo: <span class="mono">3&nbsp;oct&nbsp;2025&nbsp;15:00</span> — <span class="mono">America/Santiago</span>
+    </div>
+
+    <div class="timer" aria-live="polite" aria-atomic="true">
+      <div class="block"><div id="hours" class="value">--</div><div class="label">horas</div></div>
+      <div class="separator">:</div>
+      <div class="block"><div id="minutes" class="value">--</div><div class="label">minutos</div></div>
+      <div class="separator">:</div>
+      <div class="block"><div id="seconds" class="value">--</div><div class="label">segundos</div></div>
+    </div>
+
+    <div id="done" class="done" hidden>¡Tiempo cumplido!</div>
+    <div class="foot" id="footNote">
+      Fuente de hora: <span class="mono">Cabecera Date del servidor</span>. Si falla, intenta WorldTimeAPI; luego usa hora local <span class="warn">(fallback)</span>.
+    </div>
+  </main>
+
+  <script>
+    // ==== CONFIG ====
+    // Objetivo: 3-oct-2025 15:00 America/Santiago ≈ 18:00:00Z (UTC-3)
+    const TARGET_ISO_UTC_DEFAULT = "2025-10-03T18:00:00Z";
+    const params = new URLSearchParams(location.search);
+    const override = params.get("target");
+    const TARGET_ISO_UTC = override || TARGET_ISO_UTC_DEFAULT;
+    const target = new Date(TARGET_ISO_UTC);
+
+    const $h = document.getElementById("hours");
+    const $m = document.getElementById("minutes");
+    const $s = document.getElementById("seconds");
+    const $done = document.getElementById("done");
+    const $targetText = document.getElementById("targetText");
+    const $footNote = document.getElementById("footNote");
+
+    (function renderHeader(){
+      try{
+        const fmt = new Intl.DateTimeFormat("es-CL",{timeZone:"America/Santiago",dateStyle:"full",timeStyle:"short"});
+        $targetText.innerHTML = 'Fecha objetivo: <span class="mono">' + fmt.format(target) + '</span> — <span class="mono">America/Santiago</span>';
+      }catch(e){}
+    })();
+
+    function pad(n){ return String(n).padStart(2,"0"); }
+
+    let baseNowMs = null;
+    let lastSync = 0;
+
+    async function getServerDateSameOrigin(){
+      // HEAD a la misma URL para leer la cabecera Date (evita CORS y funciona en iOS)
+      const self = new URL(location.href);
+      self.searchParams.set("_t", String(Date.now())); // cache-bust
+      const resp = await fetch(self.toString(), { method: "HEAD", cache: "no-store" });
+      const dateHeader = resp.headers.get("Date"); // GMT string
+      if(!dateHeader) throw new Error("Sin cabecera Date");
+      const serverDate = new Date(dateHeader);
+      if(isNaN(serverDate.getTime())) throw new Error("Date ilegible: "+dateHeader);
+      return serverDate;
+    }
+
+    async function getWorldTime(){
+      const url = "https://worldtimeapi.org/api/timezone/America/Santiago";
+      const t0 = performance.now();
+      const resp = await fetch(url, { cache: "no-store" });
+      const t1 = performance.now();
+      if(!resp.ok) throw new Error("HTTP "+resp.status);
+      const data = await resp.json();
+      const serverNowMs = (data.unixtime ?? Math.floor(Date.parse(data.datetime)/1000)) * 1000;
+      const rtt = t1 - t0;
+      return new Date(serverNowMs + rtt/2);
+    }
+
+    async function syncTime(){
+      try{
+        const d = await getServerDateSameOrigin();
+        baseNowMs = d.getTime();
+        lastSync = Date.now();
+        $footNote.innerHTML = 'Fuente de hora: <span class="mono">Cabecera Date del servidor (same-origin)</span>.';
+      }catch(e1){
+        console.warn("Fallo Date same-origin:", e1);
+        try{
+          const d2 = await getWorldTime();
+          baseNowMs = d2.getTime();
+          lastSync = Date.now();
+          $footNote.innerHTML = 'Fuente de hora: <span class="mono">WorldTimeAPI — America/Santiago</span>.';
+        }catch(e2){
+          console.warn("Fallo WorldTimeAPI:", e2);
+          baseNowMs = Date.now();
+          lastSync = Date.now();
+          $footNote.innerHTML = 'Fuente de hora: <span class="mono warn">Hora local (fallback)</span>.';
+        }
+      }
+    }
+
+    function tick(){
+      if(baseNowMs === null) return;
+      const elapsed = Date.now() - lastSync;
+      const nowMs = baseNowMs + elapsed;
+      const diffMs = target.getTime() - nowMs;
+
+      if(diffMs <= 0){
+        $h.textContent = "00"; $m.textContent = "00"; $s.textContent = "00";
+        $done.hidden = false;
+        return;
+      } else { $done.hidden = true; }
+
+      const totalSeconds = Math.floor(diffMs/1000);
+      const totalMinutes = Math.floor(totalSeconds/60);
+      const totalHours = Math.floor(totalMinutes/60);
+      $h.textContent = totalHours.toString();
+      $m.textContent = pad(totalMinutes % 60);
+      $s.textContent = pad(totalSeconds % 60);
+    }
+
+    (async function start(){
+      await syncTime();
+      tick();
+      setInterval(tick, 1000);
+      // re-sync cada 60s y al volver a foco
+      setInterval(syncTime, 60000);
+      document.addEventListener("visibilitychange", () => { if(!document.hidden){ syncTime(); }});
+    })();
+  </script>
+</body>
+</html>
