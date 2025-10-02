@@ -1,161 +1,267 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cuenta regresiva — 3 Oct 2025 15:00 (Chile) — Hora servidor</title>
-  <meta name="description" content="Temporizador que usa la hora del servidor (cabecera Date) para calcular el tiempo restante al 3 de octubre de 2025 a las 15:00 (America/Santiago)." />
+  <meta charset="UTF-8" />
+  <title>Lotería Panam</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
-    :root { --bg:#0b0f14; --fg:#e8f1ff; --muted:#8aa4c7; --accent:#5ee1ff; }
-    html,body{height:100%;margin:0}
-    body{
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      background: radial-gradient(1200px 800px at 20% 20%, #0f1623, var(--bg));
-      color: var(--fg);
-      display:grid;place-items:center;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #2E0059;
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      overflow-x: hidden;
     }
-    .wrap{ text-align:center; padding:2rem; max-width:900px; width:100%; }
-    h1{ font-size:clamp(1.2rem,2.2vw+1rem,2.2rem); font-weight:700; margin:0 0 1.25rem; letter-spacing:.2px; }
-    .target{ font-size:clamp(.9rem,1vw+.6rem,1.1rem); color:var(--muted); margin-bottom:2rem; }
-    .timer{
-      display:inline-flex; align-items:baseline; gap:clamp(.4rem,1.2vw,1rem);
-      padding:clamp(.6rem,1.2vw,1rem) clamp(.8rem,2vw,1.4rem);
-      border-radius:1rem; background:rgba(255,255,255,.04);
-      box-shadow: 0 0 0 1px rgba(255,255,255,.06) inset, 0 8px 30px rgba(0,0,0,.35);
+
+    header {
+      padding: 1em;
     }
-    .block{ display:grid; gap:.25rem; min-width:clamp(90px,14vw,200px); }
-    .value{ font-variant-numeric:tabular-nums; font-weight:800; letter-spacing:1px; line-height:1; font-size:clamp(2.2rem,10vw,6rem); text-shadow:0 4px 24px rgba(94,225,255,.25); }
-    .label{ font-size:clamp(.65rem,1vw,.9rem); color:var(--muted); text-transform:uppercase; letter-spacing:1.5px; }
-    .separator{ font-size:clamp(2rem,8vw,5rem); opacity:.5; user-select:none; }
-    .done{ font-size:clamp(1.2rem,2vw+1rem,2rem); margin-top:1.5rem; color:var(--accent); font-weight:700; }
-    .foot{ margin-top:1.25rem; font-size:.9rem; color:var(--muted); opacity:.9; }
-    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace; color:#c7d7ff; }
-    .warn{ color:#ffd966; }
+
+    header img {
+      height: 70px;
+    }
+
+    h1 {
+      font-size: 2em;
+      margin: 0.5em 0;
+      color: white;
+      text-shadow: 0 0 10px #00FF88, 0 0 20px #00FF88;
+    }
+
+    #carton {
+      display: none;
+      grid-template-columns: repeat(3, 80px);
+      gap: 10px;
+      justify-content: center;
+      margin: 30px auto;
+    }
+
+    .cell {
+      background-color: #FFFFFF22;
+      padding: 25px 0;
+      border-radius: 10px;
+      font-size: 1.5em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cell.marked {
+      background-color: #D3A2FF;
+      border: 3px solid #FFA500;
+      color: #fff;
+      font-weight: bold;
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #FFA500;
+    }
+
+    #whatsappBtn {
+      display: none;
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1em;
+      background-color: #25D366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .confetti {
+      position: fixed;
+      animation: explode 3s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes explode {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { transform: translate(var(--x), var(--y)) scale(0.5); opacity: 0; }
+    }
+
+    #popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(92, 0, 128, 0.8);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+      animation: fadeIn 0.5s ease;
+    }
+
+    #popupContent {
+      background-color: #2E0059;
+      padding: 20px;
+      border: 4px solid #FFA500;
+      border-radius: 10px;
+      box-shadow: 0 0 20px #FFA500;
+      max-width: 300px;
+      color: white;
+    }
+
+    #popup input {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 5px;
+      border: none;
+      width: 100%;
+    }
+
+    #popup button {
+      background-color: #FFA500;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    #closePopup {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+    }
+
+    #ganastePopup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('https://i.imgur.com/tVDj0Nn.png') center/cover no-repeat;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    #ganastePopup h2 {
+      font-size: 3em;
+      color: #00FF88;
+      text-shadow: 0 0 10px #00FF88, 0 0 20px #00FF88;
+      font-family: Impact, sans-serif;
+    }
+
+    #ganastePopup button {
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 1.2em;
+      background-color: #25D366;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
-  
-    <div class="target" id="targetText">
-      Fecha objetivo: <span class="mono">3&nbsp;oct&nbsp;2025&nbsp;15:00</span> — <span class="mono">America/Santiago</span>
+  <div id="popup">
+    <div id="closePopup" onclick="cerrarPopup()">✕</div>
+    <div id="popupContent">
+      <h2>Bienvenido</h2>
+      <input type="text" placeholder="Nombre (opcional)" />
+      <input type="email" placeholder="Correo (opcional)" />
+      <button onclick="iniciarLoteria()">Jugar</button>
     </div>
+  </div>
 
-    <div class="timer" aria-live="polite" aria-atomic="true">
-      <div class="block"><div id="hours" class="value">--</div><div class="label">horas</div></div>
-      <div class="separator">:</div>
-      <div class="block"><div id="minutes" class="value">--</div><div class="label">minutos</div></div>
-      <div class="separator">:</div>
-      <div class="block"><div id="seconds" class="value">--</div><div class="label">segundos</div></div>
-    </div>
+  <header>
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Panam_Logo.svg/512px-Panam_Logo.svg.png" alt="Panam logo" />
+    <h1>Lotería Panam</h1>
+  </header>
 
-    <div id="done" class="done" hidden>¡Tiempo cumplido!</div>
-    <div class="foot" id="footNote">
-      
-    </div>
-  </main>
+  <div id="carton"></div>
+  <button id="whatsappBtn">Enviar por WhatsApp</button>
+
+  <div id="ganastePopup">
+    <h2>¡GANASTE!</h2>
+    <button onclick="enviarWhatsapp()">Enviar por WhatsApp</button>
+  </div>
 
   <script>
-    // ==== CONFIG ====
-    // Objetivo: 3-oct-2025 15:00 America/Santiago ≈ 18:00:00Z (UTC-3)
-    const TARGET_ISO_UTC_DEFAULT = "2025-10-03T18:00:00Z";
-    const params = new URLSearchParams(location.search);
-    const override = params.get("target");
-    const TARGET_ISO_UTC = override || TARGET_ISO_UTC_DEFAULT;
-    const target = new Date(TARGET_ISO_UTC);
+    const totalCells = 9;
+    const maxNumber = 20;
+    const carton = document.getElementById("carton");
+    const ganastePopup = document.getElementById("ganastePopup");
+    const tropicalIcons = ["🌴", "🍍", "🦜", "🌺", "🍉", "🐠", "🏝️", "🐚", "☀️"];
+    let numArray = [];
 
-    const $h = document.getElementById("hours");
-    const $m = document.getElementById("minutes");
-    const $s = document.getElementById("seconds");
-    const $done = document.getElementById("done");
-    const $targetText = document.getElementById("targetText");
-    const $footNote = document.getElementById("footNote");
-
-    (function renderHeader(){
-      try{
-        const fmt = new Intl.DateTimeFormat("es-CL",{timeZone:"America/Santiago",dateStyle:"full",timeStyle:"short"});
-        $targetText.innerHTML = 'Fecha objetivo: <span class="mono">' + fmt.format(target) + '</span> — <span class="mono">America/Santiago</span>';
-      }catch(e){}
-    })();
-
-    function pad(n){ return String(n).padStart(2,"0"); }
-
-    let baseNowMs = null;
-    let lastSync = 0;
-
-    async function getServerDateSameOrigin(){
-      // HEAD a la misma URL para leer la cabecera Date (evita CORS y funciona en iOS)
-      const self = new URL(location.href);
-      self.searchParams.set("_t", String(Date.now())); // cache-bust
-      const resp = await fetch(self.toString(), { method: "HEAD", cache: "no-store" });
-      const dateHeader = resp.headers.get("Date"); // GMT string
-      if(!dateHeader) throw new Error("Sin cabecera Date");
-      const serverDate = new Date(dateHeader);
-      if(isNaN(serverDate.getTime())) throw new Error("Date ilegible: "+dateHeader);
-      return serverDate;
+    function cerrarPopup() {
+      document.getElementById("popup").style.display = "none";
+      iniciarLoteria();
     }
 
-    async function getWorldTime(){
-      const url = "https://worldtimeapi.org/api/timezone/America/Santiago";
-      const t0 = performance.now();
-      const resp = await fetch(url, { cache: "no-store" });
-      const t1 = performance.now();
-      if(!resp.ok) throw new Error("HTTP "+resp.status);
-      const data = await resp.json();
-      const serverNowMs = (data.unixtime ?? Math.floor(Date.parse(data.datetime)/1000)) * 1000;
-      const rtt = t1 - t0;
-      return new Date(serverNowMs + rtt/2);
+    function iniciarLoteria() {
+      document.getElementById("popup").style.display = "none";
+      carton.style.display = "grid";
+
+      const numbers = new Set();
+      while (numbers.size < totalCells) {
+        numbers.add(Math.floor(Math.random() * maxNumber) + 1);
+      }
+      numArray = [...numbers];
+
+      numArray.forEach(num => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = num;
+        cell.addEventListener("click", () => marcarCasilla(cell, num));
+        carton.appendChild(cell);
+      });
     }
 
-    async function syncTime(){
-      try{
-        const d = await getServerDateSameOrigin();
-        baseNowMs = d.getTime();
-        lastSync = Date.now();
-        $footNote.innerHTML = 'Fuente de hora: <span class="mono">Cabecera Date del servidor (same-origin)</span>.';
-      }catch(e1){
-        console.warn("Fallo Date same-origin:", e1);
-        try{
-          const d2 = await getWorldTime();
-          baseNowMs = d2.getTime();
-          lastSync = Date.now();
-          $footNote.innerHTML = 'Fuente de hora: <span class="mono">WorldTimeAPI — America/Santiago</span>.';
-        }catch(e2){
-          console.warn("Fallo WorldTimeAPI:", e2);
-          baseNowMs = Date.now();
-          lastSync = Date.now();
-          $footNote.innerHTML = 'Fuente de hora: <span class="mono warn">Hora local (fallback)</span>.';
+    function marcarCasilla(cell, num) {
+      if (!cell.classList.contains("marked")) {
+        cell.classList.add("marked");
+        if (document.querySelectorAll(".cell.marked").length === totalCells) {
+          lanzarConfetti();
+          setTimeout(() => {
+            ganastePopup.style.display = "flex";
+          }, 1000);
         }
       }
     }
 
-    function tick(){
-      if(baseNowMs === null) return;
-      const elapsed = Date.now() - lastSync;
-      const nowMs = baseNowMs + elapsed;
-      const diffMs = target.getTime() - nowMs;
-
-      if(diffMs <= 0){
-        $h.textContent = "00"; $m.textContent = "00"; $s.textContent = "00";
-        $done.hidden = false;
-        return;
-      } else { $done.hidden = true; }
-
-      const totalSeconds = Math.floor(diffMs/1000);
-      const totalMinutes = Math.floor(totalSeconds/60);
-      const totalHours = Math.floor(totalMinutes/60);
-      $h.textContent = totalHours.toString();
-      $m.textContent = pad(totalMinutes % 60);
-      $s.textContent = pad(totalSeconds % 60);
+    function enviarWhatsapp() {
+      const texto = "¡He completado mi cartón Panam! Mis números son: " + numArray.join(", ");
+      const url = "https://wa.me/?text=" + encodeURIComponent(texto);
+      window.open(url, "_blank");
     }
 
-    (async function start(){
-      await syncTime();
-      tick();
-      setInterval(tick, 1000);
-      // re-sync cada 60s y al volver a foco
-      setInterval(syncTime, 60000);
-      document.addEventListener("visibilitychange", () => { if(!document.hidden){ syncTime(); }});
-    })();
+    function lanzarConfetti() {
+      for (let i = 0; i < 100; i++) {
+        const icon = document.createElement("div");
+        icon.className = "confetti";
+        icon.textContent = tropicalIcons[Math.floor(Math.random() * tropicalIcons.length)];
+        icon.style.left = (window.innerWidth / 2) + "px";
+        icon.style.top = (window.innerHeight / 2) + "px";
+        icon.style.position = "fixed";
+        icon.style.setProperty("--x", (Math.random() * 800 - 400) + "px");
+        icon.style.setProperty("--y", (Math.random() * 800 - 400) + "px");
+        icon.style.fontSize = (Math.random() * 20 + 20) + "px";
+        document.body.appendChild(icon);
+        setTimeout(() => icon.remove(), 3000);
+      }
+    }
   </script>
 </body>
 </html>
