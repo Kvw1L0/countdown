@@ -2,265 +2,222 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lotería Panam</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #2E0059;
-      color: white;
+    @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
+
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      text-align: center;
-      overflow-x: hidden;
     }
-
-    header {
-      padding: 1em;
-    }
-
-    header img {
-      height: 70px;
+    body {
+      font-family: 'Luckiest Guy', cursive;
+      background: url('fondo.png') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: start;
+      min-height: 100vh;
+      padding-top: 150px;
     }
 
     h1 {
-      font-size: 2em;
-      margin: 0.5em 0;
       color: white;
-      text-shadow: 0 0 10px #00FF88, 0 0 20px #00FF88;
+      text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
+      font-size: 2.5em;
+      margin-bottom: 20px;
     }
 
-    #carton {
-      display: none;
-      grid-template-columns: repeat(3, 80px);
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      justify-content: center;
-      margin: 30px auto;
+      margin-top: 20px;
     }
 
     .cell {
-      background-color: #FFFFFF22;
-      padding: 25px 0;
-      border-radius: 10px;
-      font-size: 1.5em;
+      width: 80px;
+      height: 80px;
+      background-color: #fff;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      font-weight: bold;
       cursor: pointer;
-      transition: all 0.2s ease;
+      border: 4px solid transparent;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
 
     .cell.marked {
-      background-color: #D3A2FF;
-      border: 3px solid #FFA500;
-      color: #fff;
-      font-weight: bold;
-      transform: scale(1.05);
-      box-shadow: 0 0 15px #FFA500;
+      border-color: orange;
+      box-shadow: 0 0 10px orange, 0 0 20px orange;
     }
 
     #whatsappBtn {
-      display: none;
       margin-top: 20px;
-      padding: 12px 24px;
-      font-size: 1em;
-      background-color: #25D366;
+      padding: 12px 20px;
+      font-size: 1.2em;
+      background-color: #25d366;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 10px;
       cursor: pointer;
+      display: none;
     }
 
-    .confetti {
-      position: fixed;
-      animation: explode 3s ease-out forwards;
-      pointer-events: none;
-    }
-
-    @keyframes explode {
-      0% { transform: translate(0, 0) scale(1); opacity: 1; }
-      100% { transform: translate(var(--x), var(--y)) scale(0.5); opacity: 0; }
-    }
-
+    /* Popup Form */
     #popup {
       position: fixed;
       top: 0;
       left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(92, 0, 128, 0.8);
+      width: 100%;
+      height: 100%;
+      background: rgba(128, 0, 128, 0.8);
+      backdrop-filter: blur(5px);
       display: flex;
-      flex-direction: column;
       justify-content: center;
       align-items: center;
-      z-index: 10;
-      backdrop-filter: blur(4px);
-      animation: fadeIn 0.5s ease;
+      z-index: 9999;
     }
 
     #popupContent {
-      background-color: #2E0059;
-      padding: 20px;
-      border: 4px solid #FFA500;
-      border-radius: 10px;
-      box-shadow: 0 0 20px #FFA500;
-      max-width: 300px;
-      color: white;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      position: relative;
+      width: 90%;
+      max-width: 400px;
+      border: 4px solid orange;
+      box-shadow: 0 0 15px orange;
+      animation: fadeIn 0.6s ease-in-out;
     }
 
-    #popup input {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 5px;
-      border: none;
+    #popupContent h2 {
+      font-size: 1.5em;
+      margin-bottom: 15px;
+      color: #6a1b9a;
+      text-align: center;
+    }
+
+    #popupContent input {
       width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
 
-    #popup button {
-      background-color: #FFA500;
+    #popupContent button {
+      width: 100%;
+      padding: 10px;
+      background-color: purple;
       color: white;
-      padding: 10px 20px;
       border: none;
       border-radius: 8px;
-      margin-top: 10px;
       cursor: pointer;
     }
 
     #closePopup {
       position: absolute;
-      top: 20px;
-      right: 20px;
-      font-size: 24px;
-      color: white;
-      cursor: pointer;
-    }
-
-    #ganastePopup {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: url('https://i.imgur.com/tVDj0Nn.png') center/cover no-repeat;
-      background-color: rgba(0, 0, 0, 0.8);
-      z-index: 20;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-
-    #ganastePopup h2 {
-      font-size: 3em;
-      color: #00FF88;
-      text-shadow: 0 0 10px #00FF88, 0 0 20px #00FF88;
-      font-family: Impact, sans-serif;
-    }
-
-    #ganastePopup button {
-      margin-top: 20px;
-      padding: 12px 24px;
+      top: 10px;
+      right: 15px;
       font-size: 1.2em;
-      background-color: #25D366;
-      color: white;
-      border: none;
-      border-radius: 8px;
       cursor: pointer;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
 <body>
+  <!-- POPUP FORM -->
   <div id="popup">
-    <div id="closePopup" onclick="cerrarPopup()">✕</div>
     <div id="popupContent">
-      <h2>Bienvenido</h2>
-      <input type="text" placeholder="Nombre (opcional)" />
-      <input type="email" placeholder="Correo (opcional)" />
-      <button onclick="iniciarLoteria()">Jugar</button>
+      <div id="closePopup">✖</div>
+      <h2>Ingresa tus datos</h2>
+      <input type="text" id="name" placeholder="Nombre (opcional)">
+      <input type="email" id="email" placeholder="Correo (opcional)">
+      <button onclick="submitData()">Comenzar</button>
     </div>
   </div>
 
-  <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Panam_Logo.svg/512px-Panam_Logo.svg.png" alt="Panam logo" />
-    <h1>Lotería Panam</h1>
-  </header>
+  <!-- TITULO Y JUEGO -->
+  <h1>Lotería Panam</h1>
+  <div id="grid"></div>
+  <button id="whatsappBtn" onclick="sendWhatsApp()">Enviar por WhatsApp</button>
 
-  <div id="carton"></div>
-  <button id="whatsappBtn">Enviar por WhatsApp</button>
-
-  <div id="ganastePopup">
-    <h2>¡GANASTE!</h2>
-    <button onclick="enviarWhatsapp()">Enviar por WhatsApp</button>
-  </div>
-
+  <!-- SCRIPT JS -->
   <script>
-    const totalCells = 9;
-    const maxNumber = 20;
-    const carton = document.getElementById("carton");
-    const ganastePopup = document.getElementById("ganastePopup");
-    const tropicalIcons = ["🌴", "🍍", "🦜", "🌺", "🍉", "🐠", "🏝️", "🐚", "☀️"];
-    let numArray = [];
+    const grid = document.getElementById("grid");
+    const whatsappBtn = document.getElementById("whatsappBtn");
+    const selectedNumbers = [];
+    const numbers = [];
 
-    function cerrarPopup() {
-      document.getElementById("popup").style.display = "none";
-      iniciarLoteria();
+    while (numbers.length < 9) {
+      const n = Math.floor(Math.random() * 20) + 1;
+      if (!numbers.includes(n)) numbers.push(n);
     }
 
-    function iniciarLoteria() {
-      document.getElementById("popup").style.display = "none";
-      carton.style.display = "grid";
-
-      const numbers = new Set();
-      while (numbers.size < totalCells) {
-        numbers.add(Math.floor(Math.random() * maxNumber) + 1);
-      }
-      numArray = [...numbers];
-
-      numArray.forEach(num => {
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.textContent = num;
-        cell.addEventListener("click", () => marcarCasilla(cell, num));
-        carton.appendChild(cell);
-      });
-    }
-
-    function marcarCasilla(cell, num) {
-      if (!cell.classList.contains("marked")) {
-        cell.classList.add("marked");
-        if (document.querySelectorAll(".cell.marked").length === totalCells) {
-          lanzarConfetti();
-          setTimeout(() => {
-            ganastePopup.style.display = "flex";
-          }, 1000);
+    numbers.forEach((num) => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      cell.textContent = num;
+      cell.addEventListener("click", () => {
+        cell.classList.toggle("marked");
+        if (cell.classList.contains("marked")) {
+          selectedNumbers.push(num);
+        } else {
+          const index = selectedNumbers.indexOf(num);
+          if (index > -1) selectedNumbers.splice(index, 1);
         }
-      }
-    }
+        if (selectedNumbers.length === 9) {
+          whatsappBtn.style.display = "block";
+          launchConfetti();
+        } else {
+          whatsappBtn.style.display = "none";
+        }
+      });
+      grid.appendChild(cell);
+    });
 
-    function enviarWhatsapp() {
-      const texto = "¡He completado mi cartón Panam! Mis números son: " + numArray.join(", ");
-      const url = "https://wa.me/?text=" + encodeURIComponent(texto);
+    function sendWhatsApp() {
+      const text = "¡Estos son mis números ganadores! " + selectedNumbers.join(", ");
+      const url = "https://wa.me/?text=" + encodeURIComponent(text);
       window.open(url, "_blank");
     }
 
-    function lanzarConfetti() {
-      for (let i = 0; i < 100; i++) {
-        const icon = document.createElement("div");
-        icon.className = "confetti";
-        icon.textContent = tropicalIcons[Math.floor(Math.random() * tropicalIcons.length)];
-        icon.style.left = (window.innerWidth / 2) + "px";
-        icon.style.top = (window.innerHeight / 2) + "px";
-        icon.style.position = "fixed";
-        icon.style.setProperty("--x", (Math.random() * 800 - 400) + "px");
-        icon.style.setProperty("--y", (Math.random() * 800 - 400) + "px");
-        icon.style.fontSize = (Math.random() * 20 + 20) + "px";
-        document.body.appendChild(icon);
-        setTimeout(() => icon.remove(), 3000);
-      }
+    function launchConfetti() {
+      alert("🎉 ¡Confetti tropical aquí! 🎉 (Simulación)");
+    }
+
+    // FORMULARIO GOOGLE SHEETS
+    const popup = document.getElementById("popup");
+    const closePopup = document.getElementById("closePopup");
+
+    closePopup.addEventListener("click", () => {
+      popup.style.display = "none";
+    });
+
+    function submitData() {
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+
+      fetch("https://script.google.com/macros/s/AKfycbw-PYGNryGedcTcPpxICNCwFAnwww2jQFmXomTCyiRQk6W4CRUNY24zA4Wte8qyWDEo/exec", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `name=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`,
+      })
+      .then(() => {
+        popup.style.display = "none";
+      });
     }
   </script>
 </body>
