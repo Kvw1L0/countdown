@@ -7,11 +7,7 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap');
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Luckiest Guy', cursive;
       background: url('fondo.png') no-repeat center center fixed;
@@ -23,21 +19,18 @@
       min-height: 100vh;
       padding-top: 150px;
     }
-
     h1 {
       color: white;
       text-shadow: 0 0 10px #0f0, 0 0 20px #0f0, 0 0 30px #0f0;
       font-size: 2.5em;
       margin-bottom: 20px;
     }
-
     #grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
       margin-top: 20px;
     }
-
     .cell {
       width: 80px;
       height: 80px;
@@ -53,12 +46,10 @@
       transition: all 0.3s ease;
       box-shadow: 0 0 15px rgba(0,0,0,0.2);
     }
-
     .cell.marked {
       border-color: orange;
       box-shadow: 0 0 10px orange, 0 0 20px orange;
     }
-
     #whatsappBtn {
       margin-top: 20px;
       padding: 12px 20px;
@@ -70,91 +61,43 @@
       cursor: pointer;
       display: none;
     }
-
-    /* Popup Form */
+    /* Popup */
     #popup {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(128, 0, 128, 0.8);
       backdrop-filter: blur(5px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      display: flex; justify-content: center; align-items: center;
       z-index: 9999;
     }
-
     #popupContent {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      position: relative;
-      width: 90%;
-      max-width: 400px;
-      border: 4px solid orange;
-      box-shadow: 0 0 15px orange;
-      animation: fadeIn 0.6s ease-in-out;
+      background: white; padding: 30px; border-radius: 15px; position: relative;
+      width: 90%; max-width: 400px; border: 4px solid orange;
+      box-shadow: 0 0 15px orange; animation: fadeIn 0.6s ease-in-out;
     }
-
-    #popupContent h2 {
-      font-size: 1.5em;
-      margin-bottom: 15px;
-      color: #6a1b9a;
-      text-align: center;
-    }
-
-    #popupContent input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    #popupContent button {
-      width: 100%;
-      padding: 10px;
-      background-color: purple;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    #closePopup {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 1.2em;
-      cursor: pointer;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.8); }
-      to { opacity: 1; transform: scale(1); }
-    }
+    #popupContent h2 { font-size: 1.5em; margin-bottom: 15px; color: #6a1b9a; text-align: center; }
+    #popupContent input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ccc; }
+    #popupContent button { width: 100%; padding: 10px; background-color: purple; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    #closePopup { position: absolute; top: 10px; right: 15px; font-size: 1.2em; cursor: pointer; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
-  <!-- POPUP FORM -->
+  <!-- POPUP -->
   <div id="popup">
     <div id="popupContent">
       <div id="closePopup">✖</div>
       <h2>Ingresa tus datos</h2>
-      <input type="text" id="name" placeholder="Nombre (opcional)">
-      <input type="email" id="email" placeholder="Correo (opcional)">
+      <input type="text" id="name" placeholder="Nombre completo">
+      <input type="email" id="email" placeholder="Correo electrónico">
       <button onclick="submitData()">Comenzar</button>
     </div>
   </div>
 
-  <!-- TITULO Y JUEGO -->
-  <h1></h1>
+  <h1>Lotería Panam</h1>
   <div id="grid"></div>
   <button id="whatsappBtn" onclick="sendWhatsApp()">Enviar por WhatsApp</button>
 
-  <!-- SCRIPT JS -->
   <script>
     const grid = document.getElementById("grid");
     const whatsappBtn = document.getElementById("whatsappBtn");
@@ -179,10 +122,8 @@
           if (index > -1) selectedNumbers.splice(index, 1);
         }
         if (selectedNumbers.length === 9) {
-          whatsappBtn.style.display = "block";
           launchConfetti();
-        } else {
-          whatsappBtn.style.display = "none";
+          whatsappBtn.style.display = "block";
         }
       });
       grid.appendChild(cell);
@@ -190,15 +131,34 @@
 
     function sendWhatsApp() {
       const text = "¡Estos son mis números ganadores! " + selectedNumbers.join(", ");
-      const url = "https://wa.me/56982564150" + encodeURIComponent(text);
+      const url = "https://wa.me/56956918043?text=" + encodeURIComponent(text);
       window.open(url, "_blank");
     }
 
     function launchConfetti() {
-      alert("🎉 ¡Confetti tropical aquí! 🎉 (Simulación)");
+      const duration = 2000;
+      const end = Date.now() + duration;
+
+      (function frame() {
+        confetti({
+          particleCount: 15,
+          angle: 60,
+          spread: 70,
+          origin: { x: 0 }
+        });
+        confetti({
+          particleCount: 15,
+          angle: 120,
+          spread: 70,
+          origin: { x: 1 }
+        });
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
     }
 
-    // FORMULARIO GOOGLE SHEETS
+    // POPUP FORM
     const popup = document.getElementById("popup");
     const closePopup = document.getElementById("closePopup");
 
